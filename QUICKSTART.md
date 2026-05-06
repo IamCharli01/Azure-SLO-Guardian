@@ -20,8 +20,8 @@ pip install azure-slo-guardian
 
 For development:
 ```bash
-git clone https://github.com/yourusername/azure-slo-guardian.git
-cd azure-slo-guardian
+git clone https://github.com/IamCharli01/Azure-SLO-Guardian.git
+cd Azure-SLO-Guardian
 pip install -e ".[dev]"
 ```
 
@@ -198,10 +198,10 @@ jobs:
   check-slos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
@@ -209,7 +209,7 @@ jobs:
         run: pip install azure-slo-guardian
       
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
