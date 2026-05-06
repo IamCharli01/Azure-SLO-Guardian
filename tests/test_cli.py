@@ -292,12 +292,13 @@ def _mock_burn_rate_alert(alerting: bool = False) -> BurnRateAlert:
     return BurnRateAlert(
         slo_name="test-slo",
         window_config=BurnRateWindow(consume_budget=2.0, short_window="5m", long_window="1h"),
-        short_window_sli=99.95 if not alerting else 90.0,
-        long_window_sli=99.95 if not alerting else 90.0,
+        short_window_burn_rate=0.5 if not alerting else 20.0,
+        long_window_burn_rate=0.5 if not alerting else 18.0,
+        burn_rate_threshold=14.4,
         target=99.9,
         is_alerting=alerting,
         severity="critical" if alerting else "warning",
-        message="SLO burn rate is acceptable" if not alerting else "SLO is burning budget",
+        message="SLO burn rate OK" if not alerting else "SLO is burning budget",
         measured_at=datetime.now(timezone.utc),
     )
 

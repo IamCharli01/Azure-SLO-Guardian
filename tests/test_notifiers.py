@@ -47,8 +47,9 @@ def _alert(alerting: bool = True) -> BurnRateAlert:
     return BurnRateAlert(
         slo_name="test-slo",
         window_config=BurnRateWindow(consume_budget=2.0, short_window="5m", long_window="1h"),
-        short_window_sli=90.0 if alerting else 99.95,
-        long_window_sli=90.0 if alerting else 99.95,
+        short_window_burn_rate=20.0 if alerting else 0.5,
+        long_window_burn_rate=18.0 if alerting else 0.4,
+        burn_rate_threshold=14.4,
         target=99.9,
         is_alerting=alerting,
         severity="critical" if alerting else "warning",

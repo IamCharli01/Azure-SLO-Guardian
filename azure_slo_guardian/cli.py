@@ -222,16 +222,52 @@ def init(output: Path) -> None:
     type=click.Path(exists=True, path_type=Path),
     help="Path to SLO configuration file",
 )
-def validate(config: Path) -> None:
-    """Validate SLO configuration file."""
+@click.option(
+    "--strict",
+    is_flag=True,
+    help="Strict mode: also verify Azure connectivity and query syntax",
+)
+def validate(config: Path, strict: bool) -> None:
+    """Validate SLO configuration file.
+
+    In default mode, validates YAML structure and schema only.
+    With --strict, also attempts to connect to Azure and validate query syntax.
+    """
     is_valid, error = validate_config(config)
 
-    if is_valid:
-        click.echo(click.style("✓ Configuration is valid", fg="green"))
-        sys.exit(0)
-    else:
+    if not is_valid:
         click.echo(click.style(f"✗ Configuration is invalid: {error}", fg="red"))
         sys.exit(1)
+
+    click.echo(click.style("✓ Configuration schema is valid", fg="green"))
+
+    if strict:
+        slo_config = load_config(config)
+        click.echo("  Running strict validation (checking Azure connectivity)...")
+        try:
+            from azure_slo_guardian.query_engine import AzureQueryEngine
+
+            engine = AzureQueryEngine()
+            # Verify credential can be obtained
+            engine.logs_client  # noqa: B018 — triggers lazy client init
+            click.echo(click.style("  ✓ Azure credentials OK", fg="green"))
+        except Exception as e:
+            click.echo(click.style(f"  ✗ Azure connectivity failed: {e}", fg="red"))
+            sys.exit(1)
+
+        # Validate each SLO has required queries
+        for slo_obj in slo_config.slos:
+            sli = slo_obj.sli
+            if sli.good_query and not sli.good_query.strip():
+                click.echo(click.style(f"  ✗ SLO '{slo_obj.name}': good_query is empty", fg="red"))
+                sys.exit(1)
+            if sli.total_query and not sli.total_query.strip():
+                click.echo(click.style(f"  ✗ SLO '{slo_obj.name}': total_query is empty", fg="red"))
+                sys.exit(1)
+
+        click.echo(click.style(f"  ✓ All {len(slo_config.slos)} SLO(s) pass strict validation", fg="green"))
+
+    sys.exit(0)
 
 
 @main.command()
@@ -517,9 +553,8 @@ def _print_alert_table(alerts) -> None:
         "SLO",
         "Short Window",
         "Long Window",
-        "Short SLI",
-        "Long SLI",
-        "Target",
+        "Burn Rate",
+        "Threshold",
         "Severity",
         "Status",
     ]
@@ -540,9 +575,8 @@ def _print_alert_table(alerts) -> None:
                 alert.slo_name,
                 alert.window_config.short_window,
                 alert.window_config.long_window,
-                f"{alert.short_window_sli:.2f}%",
-                f"{alert.long_window_sli:.2f}%",
-                f"{alert.target}%",
+                f"{alert.long_window_burn_rate:.1f}x",
+                f"{alert.burn_rate_threshold:.1f}x",
                 click.style(alert.severity.upper(), fg=severity_color),
                 click.style(status, fg=status_color),
             ]

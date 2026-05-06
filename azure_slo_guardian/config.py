@@ -284,6 +284,12 @@ def load_config(config_path: Union[str, Path]) -> SLOConfig:
     with open(path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
+    if not data or not isinstance(data, dict):
+        raise ValueError(
+            f"Configuration file is empty or invalid: {config_path}. "
+            "Expected a YAML file with a top-level 'slos' key."
+        )
+
     data = _expand_template_entries(data)
 
     return SLOConfig(**data)

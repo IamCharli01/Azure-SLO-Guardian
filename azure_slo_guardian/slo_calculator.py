@@ -144,8 +144,10 @@ class SLOCalculator:
             )
 
         except Exception as e:
-            logger.error(f"Failed to calculate SLO for {slo.name}: {e}")
-            # Return error status with 0 SLI
+            logger.error("Failed to calculate SLO '%s': %s", slo.name, e)
+            # Return error status — preserve the error message so users can diagnose.
+            # We report is_meeting_slo=False but don't fake a 0% SLI; instead we use
+            # NaN-like sentinel that the error field makes clear is not a real measurement.
             error_budget = ErrorBudget(
                 slo_name=slo.name,
                 target=objective.target,
@@ -167,7 +169,7 @@ class SLOCalculator:
                 is_meeting_slo=False,
                 error_budget=error_budget,
                 measured_at=end_time,
-                error=str(e),
+                error=f"Calculation failed: {e}",
             )
 
     def _calculate_ratio_sli(
@@ -233,6 +235,13 @@ class SLOCalculator:
             meets_threshold = measured_value > threshold
         elif operator == Operator.GTE:
             meets_threshold = measured_value >= threshold
+        else:
+            raise ValueError(f"Unsupported operator: {operator}")
+
+        logger.debug(
+            "SLO '%s' threshold check: value=%.4f, operator=%s, threshold=%.4f, meets=%s",
+            slo.name, measured_value, operator, threshold, meets_threshold,
+        )
 
         return 100.0 if meets_threshold else 0.0
 

@@ -177,10 +177,21 @@ class AzureQueryEngine:
         """Execute KQL query against Log Analytics or Application Insights.
 
         Retries up to 3 times with exponential backoff on transient failures.
+
+        The workspace_id can be:
+        - A GUID (e.g., "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx")
+        - A full resource ID (e.g., "/subscriptions/.../workspaces/my-workspace")
+
+        For full resource IDs, we extract the workspace name (last path segment).
+        For GUIDs, we use them directly.
         """
-        # Extract workspace ID from resource ID if needed
+        # Extract workspace ID from full Azure resource ID if needed
         if "/" in workspace_id:
-            workspace_id = workspace_id.split("/")[-1]
+            # Full resource ID path — extract the last segment (resource name)
+            # e.g., "/subscriptions/xxx/resourceGroups/xxx/providers/.../workspaces/my-ws"
+            segments = [s for s in workspace_id.split("/") if s]
+            workspace_id = segments[-1]
+            logger.debug("Extracted workspace ID '%s' from resource path", workspace_id)
 
         @retry(
             retry=retry_if_exception_type(_RETRYABLE_EXCEPTIONS),

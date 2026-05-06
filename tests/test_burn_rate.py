@@ -81,20 +81,22 @@ class TestBurnRateAlert:
         alert = BurnRateAlert(
             slo_name="test",
             window_config=window,
-            short_window_sli=99.5,
-            long_window_sli=99.6,
+            short_window_burn_rate=5.0,
+            long_window_burn_rate=4.5,
+            burn_rate_threshold=14.4,
             target=99.9,
-            is_alerting=True,
+            is_alerting=False,
             severity="critical",
             message="test message",
             measured_at=now,
         )
         d = alert.to_dict()
         assert d["slo_name"] == "test"
-        assert d["is_alerting"] is True
+        assert d["is_alerting"] is False
         assert d["severity"] == "critical"
-        assert d["short_window_sli"] == 99.5
-        assert d["long_window_sli"] == 99.6
+        assert d["short_window_burn_rate"] == 5.0
+        assert d["long_window_burn_rate"] == 4.5
+        assert d["burn_rate_threshold"] == 14.4
 
 
 class TestBurnRateCalculator:
@@ -118,8 +120,9 @@ class TestBurnRateCalculator:
         mock_calc.return_value = BurnRateAlert(
             slo_name="test-slo",
             window_config=slo.alerting.windows[0],
-            short_window_sli=99.95,
-            long_window_sli=99.95,
+            short_window_burn_rate=0.5,
+            long_window_burn_rate=0.5,
+            burn_rate_threshold=14.4,
             target=99.9,
             is_alerting=False,
             severity="warning",
@@ -145,8 +148,7 @@ class TestBurnRateCalculator:
             alert = calc.calculate_burn_rate(slo, slo.alerting.windows[0], now)
 
         assert not alert.is_alerting
-        assert alert.severity == "warning"
-        assert "acceptable" in alert.message
+        assert "OK" in alert.message
 
     def test_calculate_burn_rate_alerting(self):
         """When SLI is very low in both windows, alert should fire."""
@@ -162,7 +164,7 @@ class TestBurnRateCalculator:
             alert = calc.calculate_burn_rate(slo, slo.alerting.windows[0], now)
 
         assert alert.is_alerting
-        assert "burning error budget" in alert.message
+        assert "burn rate alert" in alert.message
 
     def test_calculate_burn_rate_error_returns_error_state(self):
         """When the calculator throws, return an error (not a false alert)."""
@@ -182,15 +184,19 @@ class TestBurnRateCalculator:
         assert "Error calculating burn rate" in alert.message
 
     def test_severity_levels(self):
-        """Test severity is assigned based on consume_budget."""
+        """Test severity is assigned based on burn_rate_threshold derived from config."""
         slo = _make_slo()
         now = datetime.now(timezone.utc)
         calc = BurnRateCalculator()
 
+        # burn_rate_threshold = (consume_budget/100) * (objective_window / long_window)
+        # 2% over 1h with 30d objective → 0.02 * 720 = 14.4 → critical (>=14)
+        # 5% over 6h with 30d objective → 0.05 * 120 = 6.0 → high (>=6)
+        # 10% over 6h with 30d objective → 0.10 * 120 = 12.0 → high (>=6, <14)
         windows = [
-            (BurnRateWindow(consume_budget=2.0, short_window="5m", long_window="1h"), "warning"),
+            (BurnRateWindow(consume_budget=2.0, short_window="5m", long_window="1h"), "critical"),
             (BurnRateWindow(consume_budget=5.0, short_window="30m", long_window="6h"), "high"),
-            (BurnRateWindow(consume_budget=10.0, short_window="1h", long_window="6h"), "critical"),
+            (BurnRateWindow(consume_budget=10.0, short_window="1h", long_window="6h"), "high"),
         ]
 
         for window, expected_severity in windows:
@@ -200,19 +206,21 @@ class TestBurnRateCalculator:
             ):
                 alert = calc.calculate_burn_rate(slo, window, now)
             assert alert.severity == expected_severity, (
-                f"Expected {expected_severity} for consume_budget={window.consume_budget}"
+                f"Expected {expected_severity} for consume_budget={window.consume_budget}, "
+                f"got {alert.severity} (threshold={alert.burn_rate_threshold:.1f})"
             )
 
 
 class TestBurnRateAlertErrorField:
-    """Test the new error field on BurnRateAlert."""
+    """Test the error field on BurnRateAlert."""
 
     def test_error_field_in_to_dict_when_set(self):
         alert = BurnRateAlert(
             slo_name="test-slo",
             window_config=BurnRateWindow(consume_budget=2.0, short_window="5m", long_window="1h"),
-            short_window_sli=0.0,
-            long_window_sli=0.0,
+            short_window_burn_rate=0.0,
+            long_window_burn_rate=0.0,
+            burn_rate_threshold=0.0,
             target=99.9,
             is_alerting=False,
             severity="unknown",
@@ -228,8 +236,9 @@ class TestBurnRateAlertErrorField:
         alert = BurnRateAlert(
             slo_name="test-slo",
             window_config=BurnRateWindow(consume_budget=2.0, short_window="5m", long_window="1h"),
-            short_window_sli=99.99,
-            long_window_sli=99.98,
+            short_window_burn_rate=0.5,
+            long_window_burn_rate=0.4,
+            burn_rate_threshold=14.4,
             target=99.9,
             is_alerting=False,
             severity="warning",
