@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/IamCharli01/Azure-SLO-Guardian/discussions
+    about: Ask questions and share ideas in Discussions
+  - name: 📖 Documentation
+    url: https://github.com/IamCharli01/Azure-SLO-Guardian#readme
+    about: Check the docs before opening an issue

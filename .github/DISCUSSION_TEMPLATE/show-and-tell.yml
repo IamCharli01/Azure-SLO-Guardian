@@ -1,0 +1,19 @@
+title: "🎉 Show and Tell"
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share how you're using Azure SLO Guardian! We'd love to see your SLO configs, dashboards, and workflows.
+  - type: textarea
+    id: showcase
+    attributes:
+      label: What are you sharing?
+      description: Tell us about your setup, config, or workflow
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Details
+      description: Screenshots, code snippets, or links

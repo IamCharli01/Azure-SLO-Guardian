@@ -1,0 +1,19 @@
+title: "💡 Ideas"
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share your ideas for Azure SLO Guardian! What Azure services should we support next? What integrations would help your team?
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: Describe your idea or suggestion
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Any additional context, screenshots, or examples

@@ -1,32 +1,77 @@
-# Azure SLO Guardian
+<div align="center">
 
-A lightweight, Azure-native SLO/SLI engine that defines Service Level Objectives in YAML, automatically queries Azure Monitor, Application Insights, and Log Analytics to calculate error budgets and surface burn-rate alerts.
+# 🛡️ Azure SLO Guardian
 
-## Why Azure SLO Guardian?
+### The missing SLO engine for Azure — define, track, and alert on Service Level Objectives in minutes.
 
-While Google has their SLO generator and Prometheus has Sloth, there's no comprehensive Azure-native SLO tooling. Azure SLO Guardian fills this gap by providing:
+[![CI](https://github.com/IamCharli01/Azure-SLO-Guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/IamCharli01/Azure-SLO-Guardian/actions/workflows/ci.yml)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/IamCharli01/Azure-SLO-Guardian/pulls)
+[![GitHub Discussions](https://img.shields.io/github/discussions/IamCharli01/Azure-SLO-Guardian)](https://github.com/IamCharli01/Azure-SLO-Guardian/discussions)
+[![GitHub Stars](https://img.shields.io/github/stars/IamCharli01/Azure-SLO-Guardian?style=social)](https://github.com/IamCharli01/Azure-SLO-Guardian/stargazers)
 
-- **YAML-based SLO definitions** - Simple, declarative configuration
-- **Native Azure integration** - Direct querying of Azure Monitor, Application Insights, and Log Analytics via KQL
-- **Error budget tracking** - Automatic calculation and monitoring
-- **Burn-rate alerts** - Multi-window burn-rate detection following SRE best practices
-- **CLI interface** - Easy to integrate into CI/CD pipelines
-- **Grafana export** - Optional dashboard generation
+<br />
 
-## Features
+**Google has their SLO generator. Prometheus has Sloth. Azure had... nothing. Until now.**
 
-### Core Features
-- Define SLOs/SLIs in YAML configuration
-- Query Azure Monitor, Application Insights, and Log Analytics using KQL
-- Calculate error budgets and remaining budget
-- Multi-window burn-rate alerting (following Google SRE workbook recommendations)
-- Pre-built SLO templates for App Service, Function Apps, and Logic Apps
-- Interactive `init` wizard — no KQL knowledge required
-- CLI for validation, calculation, and monitoring
-- JSON/YAML/Markdown output for integration
-- Grafana dashboard export
-- Slack, Teams, and generic webhook notifications
-- GitHub Actions integration (SLO checks as PR gates)
+[Quick Start](#-quick-start) · [Features](#-features) · [Documentation](QUICKSTART.md) · [Contributing](CONTRIBUTING.md) · [Discussions](https://github.com/IamCharli01/Azure-SLO-Guardian/discussions)
+
+</div>
+
+---
+
+## 🤔 The Problem
+
+Every SRE team on Azure faces the same frustration:
+- Azure Monitor has metrics but no native SLO tracking
+- Error budgets require manual spreadsheet calculations
+- Burn-rate alerts need custom, complex alert rules
+- No single tool ties it all together
+
+## ✅ The Solution
+
+Azure SLO Guardian gives you **production-ready SLO monitoring in under 5 minutes**:
+
+```yaml
+# That's it. Define your SLO in YAML:
+slos:
+  - name: api-availability
+    sli:
+      type: availability
+      query_type: application_insights
+      good_query: "requests | where success == true | count"
+      total_query: "requests | count"
+    objectives:
+      - target: 99.9
+        window: 30d
+```
+
+```bash
+$ azure-slo-guardian check --config slo-config.yaml
+
+┌─────────────────────┬────────┬───────────┬──────────────────┐
+│ SLO                 │ Target │ Current   │ Error Budget     │
+├─────────────────────┼────────┼───────────┼──────────────────┤
+│ api-availability    │ 99.9%  │ 99.94%    │ 🟢 58% remaining │
+│ api-latency-p95     │ 99.5%  │ 99.2%     │ 🔴 EXHAUSTED     │
+└─────────────────────┴────────┴───────────┴──────────────────┘
+```
+
+## 🚀 Features
+
+| Feature | Description |
+|---------|-------------|
+| 📝 **YAML-based SLOs** | Declarative config — version control your reliability targets |
+| 🔌 **Native Azure** | Azure Monitor, Application Insights, Log Analytics via KQL |
+| 📊 **Error Budgets** | Automatic calculation with remaining budget tracking |
+| 🔥 **Burn-Rate Alerts** | Multi-window detection per Google SRE Workbook |
+| 🧙 **Init Wizard** | Interactive setup — no KQL knowledge required |
+| 📋 **Templates** | Pre-built SLOs for App Service, Functions, Logic Apps |
+| 📈 **Grafana Export** | One-command dashboard generation |
+| 🔔 **Notifications** | Slack, Teams, and generic webhooks |
+| ⚡ **CI/CD Ready** | GitHub Actions integration — SLO checks as PR gates |
+| 🖥️ **Multi-format** | JSON, YAML, Markdown, and table output |
 
 ## Quick Start
 
@@ -232,10 +277,10 @@ jobs:
   slo-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
@@ -243,7 +288,7 @@ jobs:
         run: pip install azure-slo-guardian
       
       - name: Azure Login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       
@@ -314,6 +359,8 @@ azure-slo-guardian/
 
 Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
+See the [open issues](https://github.com/IamCharli01/Azure-SLO-Guardian/issues) for a list of proposed features and known issues.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
@@ -325,6 +372,14 @@ Inspired by:
 - Sloth (Prometheus SLO generator)
 - OpenSLO specification
 
-## Author
+---
+
+<div align="center">
 
 Built with ❤️ for the Azure SRE community
+
+**If this project helps you, consider giving it a ⭐ — it helps others discover it!**
+
+[⭐ Star this repo](https://github.com/IamCharli01/Azure-SLO-Guardian) · [🐛 Report Bug](https://github.com/IamCharli01/Azure-SLO-Guardian/issues/new?template=bug_report.yml) · [💡 Request Feature](https://github.com/IamCharli01/Azure-SLO-Guardian/issues/new?template=feature_request.yml) · [💬 Discussions](https://github.com/IamCharli01/Azure-SLO-Guardian/discussions)
+
+</div>

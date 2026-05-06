@@ -1,0 +1,19 @@
+title: "❓ Q&A"
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ask questions about Azure SLO Guardian — setup, configuration, KQL queries, integrations, or anything else!
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What would you like to know?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Any relevant config snippets, error messages, or screenshots
