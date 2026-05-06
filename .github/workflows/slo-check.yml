@@ -1,10 +1,10 @@
 name: SLO Daily Report
 
 on:
-  schedule:
-    # Daily at 9 AM UTC
-    - cron: '0 9 * * *'
   workflow_dispatch:
+  # Uncomment below once AZURE_CREDENTIALS secret is configured:
+  # schedule:
+  #   - cron: '0 9 * * *'
 
 permissions:
   contents: read
