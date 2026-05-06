@@ -1,0 +1,20 @@
+# SLO Configuration
+
+slos:
+  - name: simple-availability
+    description: "Service availability SLO"
+    service: my-service
+    sli:
+      type: availability
+      query_type: log_analytics
+      workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+      good_query: |
+        requests
+        | where success == true
+        | count
+      total_query: |
+        requests
+        | count
+    objectives:
+      - target: 99.9
+        window: 30d

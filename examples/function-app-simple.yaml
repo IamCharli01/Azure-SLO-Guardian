@@ -1,0 +1,12 @@
+# Azure SLO Guardian — Function App Example
+# No KQL knowledge required! Just fill in your app name and workspace ID.
+
+slos:
+  - template: function-app-availability
+    app_name: my-func-app
+    workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+
+  - template: function-app-errors
+    app_name: my-func-app
+    workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+    target: 99.95   # stricter than the 99.9% default

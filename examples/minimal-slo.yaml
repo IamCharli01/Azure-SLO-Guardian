@@ -1,0 +1,20 @@
+# Minimal SLO Configuration Example
+
+slos:
+  - name: simple-availability
+    description: "Simple availability SLO"
+    service: my-service
+    sli:
+      type: availability
+      query_type: application_insights
+      workspace_id: "your-workspace-id-here"
+      good_query: |
+        requests
+        | where success == true
+        | count
+      total_query: |
+        requests
+        | count
+    objectives:
+      - target: 99.9
+        window: 30d

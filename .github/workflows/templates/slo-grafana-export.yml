@@ -1,0 +1,80 @@
+# SLO Grafana Dashboard Export — generates a Grafana dashboard JSON from SLO results
+#
+# Usage: Copy this file to .github/workflows/ in your repo.
+#         Only include this workflow if you use Grafana.
+#         If you don't use Grafana, skip this file — the other workflows
+#         (daily-report, slack, teams) work independently.
+#
+# Auth: see slo-daily-report.yml for full auth setup instructions.
+# Required RBAC: "Log Analytics Reader" on your workspace(s).
+#
+# Required secrets:
+#   AZURE_CREDENTIALS — Azure service principal JSON (or use managed identity)
+#
+# Optional secrets (for auto-import to Grafana):
+#   GRAFANA_URL   — Grafana instance URL (e.g. https://grafana.mycompany.com)
+#   GRAFANA_TOKEN — Grafana API token with Editor/Admin role
+#   If these are not set, the dashboard JSON is generated as an artifact only.
+#   The auto-import step is skipped automatically.
+#
+# ┌──────────────────────────────────────────────────────────────────────┐
+# │ SCHEDULE — You MUST set a schedule. Uncomment the one you want.     │
+# └──────────────────────────────────────────────────────────────────────┘
+
+name: SLO Grafana Export
+
+on:
+  schedule:
+    - cron: '0 9 * * *'       # <-- CHANGE THIS: Daily 9 AM UTC
+    # - cron: '0 9 * * 1'     # Weekly Monday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  grafana-export:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Azure SLO Guardian
+        run: pip install -e .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Generate Grafana dashboard
+        run: |
+          azure-slo-guardian report \
+            --config slo-config.yaml \
+            --output slo-report.md \
+            --export grafana \
+            --export-output slo-dashboard.json
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grafana-dashboard-${{ github.run_number }}
+          path: slo-dashboard.json
+          retention-days: 30
+
+      # Optional: Auto-import to Grafana via API
+      - name: Import to Grafana
+        if: env.GRAFANA_URL != ''
+        run: |
+          curl -s -X POST "$GRAFANA_URL/api/dashboards/db" \
+            -H "Authorization: Bearer $GRAFANA_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"dashboard\": $(cat slo-dashboard.json), \"overwrite\": true}"
+        env:
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}

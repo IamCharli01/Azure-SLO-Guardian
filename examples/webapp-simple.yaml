@@ -1,0 +1,14 @@
+# Azure SLO Guardian — Web App (App Service) Example
+# No KQL knowledge required! Just fill in your app name and workspace ID.
+
+slos:
+  - template: app-service-availability
+    app_name: my-web-app
+    workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+    # target: 99.9    # optional — defaults to 99.9%
+    # window: 30d     # optional — defaults to 30d
+
+  - template: app-service-latency
+    app_name: my-web-app
+    workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+    # threshold: 1000  # optional — milliseconds, defaults to 1000 (1s)

@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "azure-slo-guardian"
+version = "0.1.0"
+description = "Azure-native SLO/SLI engine with error budget tracking and burn-rate alerts"
+readme = "README.md"
+authors = [
+    {name = "Azure SLO Guardian Contributors"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Systems Administration",
+]
+keywords = ["azure", "slo", "sli", "sre", "monitoring", "error-budget", "observability"]
+requires-python = ">=3.9"
+dependencies = [
+    "azure-identity>=1.15.0",
+    "azure-monitor-query>=1.3.0",
+    "click>=8.1.0",
+    "pyyaml>=6.0",
+    "pydantic>=2.0.0",
+    "tabulate>=0.9.0",
+    "jinja2>=3.1.0",
+    "python-dateutil>=2.8.0",
+    "tenacity>=8.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.5.0",
+    "types-pyyaml",
+    "types-python-dateutil",
+    "types-tabulate",
+]
+notifications = [
+    "requests>=2.31.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/IamCharli01/Azure-SLO-Guardian"
+Documentation = "https://github.com/IamCharli01/Azure-SLO-Guardian#readme"
+Repository = "https://github.com/IamCharli01/Azure-SLO-Guardian.git"
+Issues = "https://github.com/IamCharli01/Azure-SLO-Guardian/issues"
+Changelog = "https://github.com/IamCharli01/Azure-SLO-Guardian/blob/main/CHANGELOG.md"
+
+[project.scripts]
+azure-slo-guardian = "azure_slo_guardian.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["azure_slo_guardian*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by black)
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
+markers = [
+    "integration: integration tests that require Azure credentials",
+    "unit: unit tests that don't require external dependencies",
+]

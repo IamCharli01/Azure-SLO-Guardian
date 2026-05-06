@@ -1,0 +1,50 @@
+# SLO PR Gate — blocks pull requests when SLOs are breaching
+#
+# Usage: Copy this file to .github/workflows/ in your repo.
+#        Then set this workflow as a required status check in branch protection rules.
+#
+# Auth: see slo-daily-report.yml for full auth setup instructions.
+# Required RBAC: "Log Analytics Reader" on your workspace(s).
+#
+# Required secrets:
+#   AZURE_CREDENTIALS — Azure service principal JSON (or use managed identity)
+#
+# Trigger: Runs on every pull request to main/develop.
+#          No schedule needed — this is event-driven.
+
+name: SLO PR Gate
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  slo-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Azure SLO Guardian
+        run: pip install -e .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: SLO Gate Check
+        run: |
+          echo "## SLO Gate Check" >> "$GITHUB_STEP_SUMMARY"
+          azure-slo-guardian check --config slo-config.yaml --format table
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "All SLOs are within budget — deployment is safe." >> "$GITHUB_STEP_SUMMARY"
+        # Exit code 1 = SLO breaching → PR check fails → deploy blocked

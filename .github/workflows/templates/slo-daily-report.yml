@@ -1,0 +1,91 @@
+# SLO Daily Report — generates Markdown report + JSON, posts to GitHub Actions summary
+#
+# Usage: Copy this file to .github/workflows/ in your repo.
+#
+# ┌──────────────────────────────────────────────────────────────────────┐
+# │ AUTHENTICATION — choose ONE of:                                     │
+# │                                                                     │
+# │ Option A) Service Principal (GitHub Actions)                        │
+# │   Create secret AZURE_CREDENTIALS with JSON from:                   │
+# │   az ad sp create-for-rbac --name slo-guardian-sp --role reader     │
+# │     --scopes /subscriptions/<sub-id>                                │
+# │                                                                     │
+# │ Option B) Managed Identity (Azure DevOps / self-hosted runners)     │
+# │   Assign the runner's managed identity the roles below.             │
+# │   Remove the "Azure Login" step — DefaultAzureCredential picks      │
+# │   up the managed identity automatically.                            │
+# │                                                                     │
+# │ REQUIRED RBAC ROLES on your Log Analytics workspace(s):             │
+# │   • Log Analytics Reader   (read logs/KQL)                         │
+# │   • Monitoring Reader       (read metrics — optional, for metrics   │
+# │                               queries only)                         │
+# │                                                                     │
+# │ Assign via:                                                         │
+# │   az role assignment create \                                       │
+# │     --assignee <sp-or-managed-identity-id> \                        │
+# │     --role "Log Analytics Reader" \                                 │
+# │     --scope /subscriptions/<sub>/resourceGroups/<rg>/providers/     │
+# │            Microsoft.OperationalInsights/workspaces/<workspace>     │
+# └──────────────────────────────────────────────────────────────────────┘
+#
+# ┌──────────────────────────────────────────────────────────────────────┐
+# │ SCHEDULE — uncomment the cron line you want, comment out the rest.  │
+# │ You MUST set a schedule. Default is daily at 9 AM UTC.              │
+# └──────────────────────────────────────────────────────────────────────┘
+#
+# Optional secrets:
+#   SLO_REPORT_STORAGE_ACCOUNT — Azure Storage account for archiving reports
+#   SLO_REPORT_CONTAINER       — Blob container name
+
+name: SLO Daily Report
+
+on:
+  schedule:
+    - cron: '0 9 * * *'       # <-- CHANGE THIS: Daily 9 AM UTC
+    # - cron: '0 9 * * 1'     # Weekly Monday 9 AM UTC
+    # - cron: '0 */6 * * *'   # Every 6 hours
+    # - cron: '0 * * * *'     # Every hour
+  workflow_dispatch:           # Manual trigger via Actions UI
+
+permissions:
+  contents: read
+
+jobs:
+  slo-report:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Azure SLO Guardian
+        run: pip install -e .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Generate SLO report
+        run: |
+          azure-slo-guardian report --config slo-config.yaml --output slo-report.md
+          azure-slo-guardian check --config slo-config.yaml --format json > slo-report.json
+        continue-on-error: true
+
+      - name: Post report to job summary
+        if: always()
+        run: cat slo-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload report artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: slo-report-${{ github.run_number }}
+          path: |
+            slo-report.md
+            slo-report.json
+          retention-days: 30

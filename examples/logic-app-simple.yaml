@@ -1,0 +1,12 @@
+# Azure SLO Guardian — Logic App Example
+# No KQL knowledge required! Just fill in your workflow name and workspace ID.
+
+slos:
+  - template: logic-app-success-rate
+    app_name: my-order-workflow
+    workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+
+  - template: logic-app-latency
+    app_name: my-order-workflow
+    workspace_id: "${LOG_ANALYTICS_WORKSPACE_ID}"
+    threshold: 60000    # 60 seconds — override default 30s
