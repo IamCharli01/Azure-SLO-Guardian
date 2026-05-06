@@ -68,7 +68,7 @@ $ azure-slo-guardian check --config slo-config.yaml
 | 🔥 **Burn-Rate Alerts** | Multi-window detection per Google SRE Workbook |
 | 🧙 **Init Wizard** | Interactive setup — no KQL knowledge required |
 | 📋 **Templates** | Pre-built SLOs for App Service, Functions, Logic Apps |
-| 📈 **Grafana Export** | One-command dashboard generation |
+| 📈 **Grafana Export** | Starter dashboard template for Grafana import |
 | 🔔 **Notifications** | Slack, Teams, and generic webhooks |
 | ⚡ **CI/CD Ready** | GitHub Actions integration — SLO checks as PR gates |
 | 🖥️ **Multi-format** | JSON, YAML, Markdown, and table output |

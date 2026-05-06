@@ -1,7 +1,12 @@
 """Grafana dashboard JSON exporter.
 
-Generates a Grafana dashboard JSON model from SLO calculation results
-that can be imported directly via the Grafana API or UI.
+Generates a Grafana dashboard JSON template from SLO calculation results
+that can be imported via the Grafana API or UI as a starting point.
+
+NOTE: This produces a static snapshot dashboard — it displays the SLO values
+at the time of export. For live dashboards connected to Azure Monitor, use
+this as a structural template and connect your own Azure Monitor or
+Azure Data Explorer data source in Grafana.
 """
 
 import json
